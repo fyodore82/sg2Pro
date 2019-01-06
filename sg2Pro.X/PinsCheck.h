@@ -17,8 +17,8 @@ char PinState;  // Bits: 29;210;25;24; 23;14-16;21;28
                 // 29 - engine temperature
                 // 28 - Batt U
 char NewState;  // Starts from NS_ZERO. -1 for Low State, +1 for High State. If >= NS_ZERO + 3 -> write to PinState
-char Teng;
-char Ubatt;
+unsigned char Teng;
+unsigned char Ubatt;
 
 #define CT  3
 #define NS_ZERO 0x80    // NewState = Zero
@@ -64,7 +64,7 @@ void TMR2_Cfg (void);     // Configs Timer2 for digital inputs check
 */
 void ADC_Start (char ANCh);      // ANCh - Analog channel num
 
-void OutRet (char, char *, char);
+void OutRet (unsigned char, unsigned char *, unsigned char);
 
 
 #ifdef	__cplusplus

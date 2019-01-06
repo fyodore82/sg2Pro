@@ -2,7 +2,7 @@
 #include <xc.h>
 
 // stack = 0
-void OutRet (char addr, char *ret, char Read)
+void OutRet (unsigned char addr, unsigned char *ret, unsigned char Read)
 {
     char gie = INTCONbits.GIE;
     INTCONbits.GIE = 0x0;               // Disable ALL interrupts
@@ -28,9 +28,9 @@ void OutRet (char addr, char *ret, char Read)
     INTCONbits.GIE = gie;            // Enable Interrupts back
 }
 
-unsigned char TEngUbattRW (unsigned char StartAddr, char *Teng, char Read)
+unsigned char TEngUbattRW (unsigned char StartAddr, unsigned char *Teng, unsigned char Read)
 {
-    char addr, lTeng, RTimes, EqTimes;
+    unsigned char addr, lTeng, RTimes, EqTimes;
     if (!Read)      // We should WRITE
     {
         for (addr = StartAddr; addr < StartAddr + 5; addr++)

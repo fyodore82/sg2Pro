@@ -17,8 +17,8 @@ extern "C" {
 
 #define _XTAL_FREQ 4000000
 
-unsigned char TEngUbattRW (unsigned char StartAddr, char *Teng, char Read);
-void OutRet (char addr, char *ret, char Read);
+unsigned char TEngUbattRW (unsigned char StartAddr, unsigned char *Teng, unsigned char Read);
+void OutRet (unsigned char addr, unsigned char *ret, unsigned char Read);
 
 
 #ifdef	__cplusplus

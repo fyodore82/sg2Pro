@@ -9,13 +9,13 @@
 #include <stdlib.h>
 //#include <pic16f690.h> 
 //#include <htc.h>
-#include "../../i2c/i2c_my.h"
+#include "../../i2c/i2c/i2c_my.h"
 #include "PinsCheck.h"
 #include "EngBinSt.h"
 #include "EEPROMfunc.h"
 #include "ResetReasons.h"
 #include <xc.h>
-#include "../../i2c/i2cCmds.h"
+#include "../../i2c/i2c/i2cCmds.h"
 //#include <.\i2c.h>
 
 // PIC16F690 Configuration Bit Settings
@@ -46,10 +46,10 @@
 //const unsigned int abc3 @ 0x2114 = 0x5566;
 //const unsigned int abc4 @ 0x2116 = 0x5566;
 //const unsigned int abc5 @ 0x2118 = 0x5566;
-__EEPROM_DATA(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
-__EEPROM_DATA(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
-__EEPROM_DATA(0xD6, 0xD6, 0xD6, 0xD6, 0xD6, 0x94, 0x94, 0x94);
-__EEPROM_DATA(0x94, 0x94, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
+//__EEPROM_DATA(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
+//__EEPROM_DATA(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
+//__EEPROM_DATA(0xD6, 0xD6, 0xD6, 0xD6, 0xD6, 0x94, 0x94, 0x94);
+//__EEPROM_DATA(0x94, 0x94, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 
 
 
@@ -66,41 +66,9 @@ unsigned char TEngTemp, UbattMin;
 
 void I2CSlaveSR (void);
 
-/*
- * 
- */
-/*
-void OutRet (char addr, char *ret, char Read)
-{
-    char gie = INTCONbits.GIE;
-    INTCONbits.GIE = 0x0;               // Disable ALL interrupts
-    EEADR = addr;               // Address EEPROM
-    EECON1bits.EEPGD = 0x0;     // ?????? ? ??????
-    if (Read)
-    {
-        EECON1bits.RD = 1;
-        *ret = EEDAT;
-    }
-    else
-    {
-        EEDAT = *ret;
-        EECON1bits.WREN = 0x1;      // Write enabled
-        EECON2 = 0x55;              // Magic sequence
-        EECON2 = 0xAA;
-        EECON1bits.WR = 0x1;
-
-        // EECON1bits.WREN = 0x0;
-        while(EECON1bits.WR);
-        __delay_ms(100);     // Safe Delay - _dealy(100000), which is equal to 100 ms on 4MHz
-    }
-    INTCONbits.GIE = gie;            // Enable Interrupts back
-}
-*/
-
-
 // stack = 0
 
-void interrupt InterruptService (void)
+__interrupt(low_priority) void tc_int (void)
 {
     if (INTCONbits.RABIF)
     {
@@ -137,7 +105,7 @@ void WriteLog (unsigned char Event, unsigned char ResetReason)        // Writes 
 //  0b00000001 - TEB Low -> High (or High -> Low)
 //  0b00000000 - Start by low voltage
 {
-    char d[6];
+    unsigned char d[6];
 
     if (Event == WL_NOLOG)
         return;
@@ -415,6 +383,9 @@ unsigned char EngBinState (void)
     {
         // If Eng had been started automatically OR everything OFF
 //        if ((IntSvcSync & ISS_AUTOST) || (BinSt == OFF && EngSt == OFF))
+        //if (EngSt == CN25FIRSTLOW)
+          //  if ()
+        
         if (EngSt != ENGON)     // if ENG is started we woudn't respond to request
         {
             if (TEB >= 0x7F)
@@ -471,6 +442,13 @@ unsigned char EngBinState (void)
         if (BinSt == OFF && EngSt == OFF &&
             ASRONTmr == 0xFF && NewBinTmr == 0xFF && NewASRTmr == 0xFF)       // Binar is OFF, Eng is OFF, ASRONTmr is OFF now
         {
+            EngSt = CN25FIRSTHIGH;
+            CN25Tmr = 0x4;
+        }
+        
+        if (EngSt == CN25FIRSTLOW)
+        {
+            EngSt = OFF;
             IntSvcSync &= ~ISS_AUTOST;  // Start by command (NOT automatically, by low voltage)
 
             if (TEB <= 0x7F)  // TEB <= 0x7F - Binar
@@ -488,6 +466,12 @@ unsigned char EngBinState (void)
     }
     else        // Channel 2 is in 0 state
     {
+        if (EngSt == CN25FIRSTHIGH)
+        {
+            EngSt = CN25FIRSTLOW;
+            CN25Tmr = 0x4;
+        }
+        
         if (BinSt == BINTOST)   // Binar should be started
         {
             DO1819 = 1;
@@ -567,7 +551,7 @@ void I2CReset (void)
 // stack = 1 (OutRet)
 void I2CSlaveSR (void)
 {
-    char x;
+    unsigned char x;
 
     if (PIR1bits.SSPIF == 0)
         return;
@@ -976,6 +960,13 @@ unsigned char TmrRoutines (unsigned char *pBINtmr)
 
         if (i2cSSPIFTmr != 0xFF)
             i2cSSPIFTmr--;
+        
+        if (CN25Tmr != 0xFF)
+        {
+            CN25Tmr--;
+            if (CN25Tmr == 0xFF && (EngSt == CN25FIRSTHIGH || EngSt == CN25FIRSTLOW))
+                EngSt = OFF;
+        }
 
         if (BinSt == OFF && EngSt == OFF &&
             ASRONTmr == 0xFF && NewBinTmr == 0xFF && NewASRTmr == 0xFF) // && ASRChkTmr == 0xFF)
@@ -1078,7 +1069,8 @@ void main(void) {
     NewBinTmr = 0xFF;
     NewASRTmr = 0xFF;
     EngStartTmr = 0xFF;
-
+    CN25Tmr = 0xFF;
+    
     UbattTmr = 0xFF;
     IntSvcSync = 0;
     StateTest = ST_NONE;

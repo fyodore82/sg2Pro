@@ -11,17 +11,6 @@
 #ifdef	__cplusplus
 extern "C" {
 #endif
-
-#define ASRTOST     1   // ASR should be started (CN_25 is 1, wait when it will be 0 and start)
-#define ASROFFON    2   // ASR should be turned ON (gave negative impulse to ASR, but not acknoleged that Eng started)
-#define ENGASRON    3   // Engine started by ASR
-#define ASRONOFF    4   // ASR should be turned OFF (gave negative impulse to ASR, but not acknoleged that Eng turned OFF)
-#define ASRTOSTOP   5   // Got STOP command (CN_25 is 0, wait when it will be 1 and stop)
-
-#define ENGON       7   // Engine started by key
-#define OFF         0   // Everything OFF
-
-
 #define ERR_BINPATTERN 0x80
 #define ERR_ENGPATTERN 0xC0
 
@@ -45,6 +34,22 @@ extern "C" {
 
 #define ERR_ASRTMR_ENGON    0xC7
 
+
+#define ASRTOST     1   // ASR should be started (CN_25 is 1, wait when it will be 0 and start)
+#define ASROFFON    2   // ASR should be turned ON (gave negative impulse to ASR, but not acknoleged that Eng started)
+#define ENGASRON    3   // Engine started by ASR
+#define ASRONOFF    4   // ASR should be turned OFF (gave negative impulse to ASR, but not acknoleged that Eng turned OFF)
+#define ASRTOSTOP   5   // Got STOP command (CN_25 is 0, wait when it will be 1 and stop)
+    
+#define CN25FIRSTHIGH   0x21  // First impulse got. Wait for Second and deside what to start
+                          // On second CN25 we start BIN/ENG.
+                          // On second CN21 we reset error if any
+#define CN25FIRSTLOW    0x22
+
+#define ENGON       7   // Engine started by key
+#define OFF         0   // Everything OFF
+
+    
 #define BINTOST     0x11   // Binar should be started (CN_25 is 0, wait when it will be 1 and start)
 #define BINOFFON    0x12   // Binar is starting now
 #define BINON       0x13   // Binar is ON
@@ -91,7 +96,7 @@ unsigned char StateTest;
 // UbattTmr - Timer decremented if battery is low
 // TEB - Start Engine or Binar. If more or equal to 0x80 - Engine, if less or equal to 0x7F - Binar
 // TEBPrev - Previous value of TEB. If TEB != TEBPrev we identified that TEB gone to High from Low or vice versa. We need to log and make TEBPrev = TEB
-unsigned char BinSt, EngSt, NewBinTmr, NewASRTmr, ASRONTmr, EngStartTmr, UbattTmr, TEB, TEBPrev;
+unsigned char BinSt, EngSt, NewBinTmr, NewASRTmr, ASRONTmr, EngStartTmr, UbattTmr, CN25Tmr, TEB, TEBPrev;
 
 
 #ifdef	__cplusplus
