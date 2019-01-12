@@ -8,8 +8,8 @@
       <itemPath>EngBinSt.h</itemPath>
       <itemPath>EEPROMfunc.h</itemPath>
       <itemPath>ResetReasons.h</itemPath>
-      <itemPath>../../i2c/i2c_my.h</itemPath>
-      <itemPath>../../i2c/i2cCmds.h</itemPath>
+      <itemPath>../../I2C/i2c/i2cCmds.h</itemPath>
+      <itemPath>../../I2C/i2c/i2c_my.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -21,7 +21,7 @@
       <itemPath>newmain.c</itemPath>
       <itemPath>PinsCheck.c</itemPath>
       <itemPath>EEPROMfunc.c</itemPath>
-      <itemPath>../../i2c/i2c_my.c</itemPath>
+      <itemPath>../../I2C/i2c/i2c_my.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
