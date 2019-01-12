@@ -68,7 +68,7 @@ void I2CSlaveSR (void);
 
 // stack = 0
 
-__interrupt(low_priority) void tc_int (void)
+void interrupt tc_int (void)
 {
     if (INTCONbits.RABIF)
     {
@@ -311,7 +311,7 @@ unsigned char EngBinState (void)
             {
                 if (EngSt != ENGON && EngSt != ENGASRON && EngStartTmr == 0xFF)
                 {
-                    NewASRTmr = 0x10;
+                    NewASRTmr = 0x05;
                                         // Start EngChkTmr timer to check if Engine will work for at least EngChkTmr
                                         //  and only if Engine has been switched OFF more than EngStartTmr ago
                     EngSt = ENGON;      // WriteLog will write correct EngSt
@@ -327,7 +327,7 @@ unsigned char EngBinState (void)
             {
                 if (EngSt == ASROFFON)   // We just started ASR, check if Engine will work for at lease ASRChkTmr
                 {
-                    NewASRTmr = 0x10;
+                    NewASRTmr = 0x05;
                     EngSt = ENGASRON;
                     WrLogEvent = 0;
                     //WriteLog(0, 0);
@@ -338,7 +338,7 @@ unsigned char EngBinState (void)
     }
     else    // IG is OFF
     {
-        if (EngSt != ASROFFON && EngSt != ASRTOST && EngSt != OFF)
+        if (/*EngSt != ASROFFON && EngSt != ASRTOST && EngSt != OFF*/EngSt == ENGASRON || EngSt == ENGON)
         {
             EngStartTmr = 0x10;
             EngSt = OFF;
