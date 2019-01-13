@@ -1167,6 +1167,8 @@ void main(void) {
 
     SearchStop();
 
+    //addrh = 0;
+    //addrl = 0x7b;
     TEBPrev = TEB;
 
     // ----------------------------------------------
@@ -1317,7 +1319,7 @@ void main(void) {
             asm ("sleep");
 #elif __DEBUG
             // WriteLog (0);
-            __delay_ms (1000);
+            __delay_ms (2000);
             sec += 16;
             IntSvcSync |= ISS_NEWSEC;
 #endif
