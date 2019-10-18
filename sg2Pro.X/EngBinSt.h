@@ -34,17 +34,25 @@ extern "C" {
 
 #define ERR_ASRTMR_ENGON    0xC7
 
+#define ERR_CN21HIGHTOOLONG 0xC8
+#define ERR_CN25HIGHTOOLONG 0xC9
 
 #define ASRTOST     1   // ASR should be started (CN_25 is 1, wait when it will be 0 and start)
 #define ASROFFON    2   // ASR should be turned ON (gave negative impulse to ASR, but not acknoleged that Eng started)
 #define ENGASRON    3   // Engine started by ASR
 #define ASRONOFF    4   // ASR should be turned OFF (gave negative impulse to ASR, but not acknoleged that Eng turned OFF)
 #define ASRTOSTOP   5   // Got STOP command (CN_25 is 0, wait when it will be 1 and stop)
-    
-#define CN25FIRSTHIGH   0x21  // First impulse got. Wait for Second and deside what to start
+
+    unsigned char CN21CN25State;
+    #define CN_2125NONE          0x0
+#define CN_25FIRSTHIGH   0x21  // First impulse got. Wait for Second and deside what to start
                           // On second CN25 we start BIN/ENG.
                           // On second CN21 we reset error if any
-#define CN25FIRSTLOW    0x22
+#define CN_25FIRSTLOW    0x22
+
+    
+#define CN_21AFTERCN25HIGH   0x23  // First impulse got. Wait for Second impulse or do ST_TEST
+#define CN_21AFTERCN25LOW    0x24
 
 #define ENGON       7   // Engine started by key
 #define OFF         0   // Everything OFF

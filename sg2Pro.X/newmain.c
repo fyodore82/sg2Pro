@@ -289,6 +289,49 @@ unsigned char EngBinState (void)
         BinSt = OFF;
         EngSt = OFF;    // Set EngSt to OFF to be able to start EngChkTmr
     }
+    
+    if (!(PinState & (1 << CN_25)))    // START command received (CN_25 == 0
+    {
+        if (((BinSt == OFF && EngSt == OFF) 
+            || ((BinSt&ERR_BINPATTERN) || (EngSt&ERR_ENGPATTERN))) 
+            && ASRONTmr == 0xFF && NewBinTmr == 0xFF && NewASRTmr == 0xFF
+            && CN21CN25State == CN_2125NONE)       // Binar is OFF, Eng is OFF, ASRONTmr is OFF now
+        {
+            CN21CN25State = CN_25FIRSTHIGH;
+            CN25Tmr = 0x4;
+        }
+    }
+    else
+    {
+        if (CN21CN25State == CN_25FIRSTHIGH)
+        {
+            CN21CN25State = CN_25FIRSTLOW;
+            CN25Tmr = 0x4;
+        }
+    }
+    
+    if (!(PinState & (1 << CN_21)))    // STOP command received
+    {
+        if (CN21CN25State == CN_25FIRSTLOW 
+            && ((BinSt&ERR_BINPATTERN) || (EngSt&ERR_ENGPATTERN)))
+        {
+            CN21CN25State = CN_21AFTERCN25HIGH;
+            CN25Tmr = 0x4;
+        }
+    }
+    else
+    {
+        if (CN21CN25State == CN_21AFTERCN25HIGH)
+        {
+            CN21CN25State = CN_2125NONE;
+            BinSt = OFF;
+            EngSt = OFF;    // Set EngSt to OFF to be able to start EngChkTmr
+            __delay_ms(2000);
+            DO27 = 1;
+            __delay_ms(2000);
+            DO27 = 0;
+        }
+    }
 
     if ((BinSt&ERR_BINPATTERN) || (EngSt&ERR_ENGPATTERN))       // Binar or Eng is in error state, exit
         return (WrLogEvent);
@@ -299,6 +342,8 @@ unsigned char EngBinState (void)
 
     if (PinState & (1 << CN_210))       // IG is ON
     {
+        CN25Tmr = 0xFF;
+        CN21CN25State = CN_2125NONE;
         if (EngSt != ASRONOFF && EngSt != ASRTOSTOP)
         {
             ASRONTmr = 0xFF;    // STOP ASR timer as engine is already started
@@ -338,7 +383,7 @@ unsigned char EngBinState (void)
     }
     else    // IG is OFF
     {
-        if (/*EngSt != ASROFFON && EngSt != ASRTOST && EngSt != OFF*/EngSt == ENGASRON || EngSt == ENGON)
+        if (EngSt == ENGASRON || EngSt == ENGON)
         {
             EngStartTmr = 0x10;
             EngSt = OFF;
@@ -356,6 +401,8 @@ unsigned char EngBinState (void)
         {
             NewBinTmr = 0xFF;        // Turn OFF new state timer
             ASRONTmr = 0xFF;        // Turn OFF ASR timer
+            CN21CN25State = CN_2125NONE;
+            CN25Tmr = 0xFF;
             BinSt = BINON;
             WrLogEvent = 0;
             //WriteLog (0, 0);
@@ -385,7 +432,6 @@ unsigned char EngBinState (void)
 //        if ((IntSvcSync & ISS_AUTOST) || (BinSt == OFF && EngSt == OFF))
         //if (EngSt == CN25FIRSTLOW)
           //  if ()
-        
         if (EngSt != ENGON)     // if ENG is started we woudn't respond to request
         {
             if (TEB >= 0x7F)
@@ -439,15 +485,11 @@ unsigned char EngBinState (void)
 
     if (!(PinState & (1 << CN_25)))    // START command received (CN_25 == 0
     {
-        if (BinSt == OFF && EngSt == OFF &&
-            ASRONTmr == 0xFF && NewBinTmr == 0xFF && NewASRTmr == 0xFF)       // Binar is OFF, Eng is OFF, ASRONTmr is OFF now
+        if (CN21CN25State == CN_25FIRSTLOW 
+            && BinSt == OFF && EngSt == OFF 
+            && ASRONTmr == 0xFF && NewBinTmr == 0xFF && NewASRTmr == 0xFF)
         {
-            EngSt = CN25FIRSTHIGH;
-            CN25Tmr = 0x4;
-        }
-        
-        if (EngSt == CN25FIRSTLOW)
-        {
+            CN21CN25State = CN_2125NONE;
             EngSt = OFF;
             IntSvcSync &= ~ISS_AUTOST;  // Start by command (NOT automatically, by low voltage)
 
@@ -466,12 +508,6 @@ unsigned char EngBinState (void)
     }
     else        // Channel 2 is in 0 state
     {
-        if (EngSt == CN25FIRSTHIGH)
-        {
-            EngSt = CN25FIRSTLOW;
-            CN25Tmr = 0x4;
-        }
-        
         if (BinSt == BINTOST)   // Binar should be started
         {
             DO1819 = 1;
@@ -964,8 +1000,19 @@ unsigned char TmrRoutines (unsigned char *pBINtmr)
         if (CN25Tmr != 0xFF)
         {
             CN25Tmr--;
-            if (CN25Tmr == 0xFF && (EngSt == CN25FIRSTHIGH || EngSt == CN25FIRSTLOW))
-                EngSt = OFF;
+            if (CN25Tmr == 0xFF)
+            {
+                if (CN21CN25State == CN_25FIRSTLOW)
+                    CN21CN25State = CN_2125NONE;
+                if (CN21CN25State == CN_25FIRSTHIGH) {
+                    EngSt = ERR_CN25HIGHTOOLONG;
+                    CN21CN25State = CN_2125NONE;
+                }
+                if (CN21CN25State == CN_21AFTERCN25HIGH) {
+                    EngSt = ERR_CN21HIGHTOOLONG;
+                    CN21CN25State = CN_2125NONE;
+                }
+            }      
         }
 
         if (BinSt == OFF && EngSt == OFF &&
@@ -1074,6 +1121,7 @@ void main(void) {
     UbattTmr = 0xFF;
     IntSvcSync = 0;
     StateTest = ST_NONE;
+    CN21CN25State = CN_2125NONE;
 
     CheckedNow = CN_NONE;
     PinState = 0;
@@ -1227,34 +1275,6 @@ void main(void) {
             CheckRes();
         }
 
-       /* if (!(PinState & (1 << CN_25)))
-        {
-            DO27=1;
-        }
-        else
-        {
-            DO27=0;
-        }
-
-        if (!(PinState & (1 << CN_21)))
-        {
-            DO26=1;
-        }
-        else
-        {
-            DO26=0;
-        }
-        if (!(PinState & (1 << CN_1416)))
-        {
-            DO1819=1;
-        }
-        else
-        {
-            DO1819=0;
-        }
-
-    }
-    {*/
         if (i2cHoldTmr == 0xFF)
         {
             unsigned char resbin = EngBinState ();
