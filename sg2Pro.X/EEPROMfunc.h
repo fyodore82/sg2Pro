@@ -14,6 +14,7 @@ extern "C" {
 
 #define TENG_EEPROM 0x10        // First byte, where Teng storen in EEPROM
 #define UBATT_EEPROM TENG_EEPROM + 5    // First byte, where Ubatt is stored in EEPROM
+#define UBATT_EEPROM_LOW UBATT_EEPROM + 5
 
 #define _XTAL_FREQ 4000000
 

@@ -43,8 +43,8 @@ extern "C" {
 #define ASRONOFF    4   // ASR should be turned OFF (gave negative impulse to ASR, but not acknoleged that Eng turned OFF)
 #define ASRTOSTOP   5   // Got STOP command (CN_25 is 0, wait when it will be 1 and stop)
 
-    unsigned char CN21CN25State;
-    #define CN_2125NONE          0x0
+unsigned char CN21CN25State;
+#define CN_2125NONE      0x0
 #define CN_25FIRSTHIGH   0x21  // First impulse got. Wait for Second and deside what to start
                           // On second CN25 we start BIN/ENG.
                           // On second CN21 we reset error if any
@@ -96,8 +96,8 @@ unsigned char StateTest;
 #define WL_STARTBYLOWVOLTAGE 6
 #define WL_NOLOG 0xFF   // Logging not needed
 
-// ASRChkTmr - After starting by ASR check if Engine works for at least ASRChkTmr. If less, go to ERR
-// EngChkTmr - After starting engine check if it works for at least EngChkTmr. If less don't clear ERR and go to ERR
+// ASRChkTmr - Seems not used! After starting by ASR check if Engine works for at least ASRChkTmr. If less, go to ERR
+// EngChkTmr - Seems not used!, After starting engine check if it works for at least EngChkTmr. If less don't clear ERR and go to ERR
 // NewBinTmr, NewASRTmr - Timers, which are turned on after Binar or ASR switched to new states
 // EngStartTmr - Time after Eng switched to OFF during Eng can be started and turned OFF withou ERR
 // ASRONTmr - After this timer ASR will be started. Timer turned on after Binar stopped

@@ -18,7 +18,7 @@ char PinState;  // Bits: 29;210;25;24; 23;14-16;21;28
                 // 28 - Batt U
 char NewState;  // Starts from NS_ZERO. -1 for Low State, +1 for High State. If >= NS_ZERO + 3 -> write to PinState
 unsigned char Teng;
-unsigned char Ubatt;
+unsigned char Ubatt, UbattLow;
 
 #define CT  3
 #define NS_ZERO 0x80    // NewState = Zero

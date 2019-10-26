@@ -49,9 +49,9 @@
 //__EEPROM_DATA(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 //__EEPROM_DATA(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
 //__EEPROM_DATA(0xD6, 0xD6, 0xD6, 0xD6, 0xD6, 0x94, 0x94, 0x94);
-//__EEPROM_DATA(0x94, 0x94, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
+//__EEPROM_DATA(0x94, 0x94, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF);
 
-
+// UbattLow holds only 1 bit, Look in PunsCheck.c
 
 unsigned char addrh, addrl;
 
@@ -61,7 +61,7 @@ unsigned char i2cCmd, i2cEEPROMAddr, i2cSSPIFTmr, i2cHoldTmr;
 
 // TEngTemp - Engine temp, if lower - start binar
 // UbattMin - Minimum battery voltage, start engine if lower
-unsigned char TEngTemp, UbattMin;
+unsigned char TEngTemp, UbattMin, UbattMinLow;
 
 
 void I2CSlaveSR (void);
@@ -356,7 +356,7 @@ unsigned char EngBinState (void)
             {
                 if (EngSt != ENGON && EngSt != ENGASRON && EngStartTmr == 0xFF)
                 {
-                    NewASRTmr = 0x05;
+                    NewASRTmr = 0x03;
                                         // Start EngChkTmr timer to check if Engine will work for at least EngChkTmr
                                         //  and only if Engine has been switched OFF more than EngStartTmr ago
                     EngSt = ENGON;      // WriteLog will write correct EngSt
@@ -370,7 +370,7 @@ unsigned char EngBinState (void)
             }
             else
             {
-                if (EngSt == ASROFFON)   // We just started ASR, check if Engine will work for at lease ASRChkTmr
+                if (EngSt == ASROFFON)   // We just started ASR, check if Engine will work for at lease NewASRTmr
                 {
                     NewASRTmr = 0x05;
                     EngSt = ENGASRON;
@@ -596,12 +596,6 @@ void I2CSlaveSR (void)
 
     if (SSPSTATbits.R_W)    // Master wants to receive, READ (we WRITE to master)
     {
-/*        if (!SSPSTATbits.D_nA)      // First byte is address
-        {
-            x = SSPBUF;
-        }
-        else
-        {*/
             if (SSPCONbits.CKP == 0)    // Clock stretch after address match and we TRANSMIT (WRITE to master)
             {
                 switch(i2cCmd)
@@ -803,6 +797,10 @@ void I2CSlaveSR (void)
                         x = SSPBUF;
                         UbattMin = x;
                         TEngUbattRW (UBATT_EEPROM, &x, 0);  // Read TEng treshold temp
+                        break;
+                    case _I2C_UTRHLD_LOW:
+                        UbattMinLow = SSPBUF;
+                        TEngUbattRW (UBATT_EEPROM_LOW, &UbattMinLow, 0);
                         break;
                     case _I2C_TTRHLD:
                         x = SSPBUF;
@@ -1018,7 +1016,8 @@ unsigned char TmrRoutines (unsigned char *pBINtmr)
         if (BinSt == OFF && EngSt == OFF &&
             ASRONTmr == 0xFF && NewBinTmr == 0xFF && NewASRTmr == 0xFF) // && ASRChkTmr == 0xFF)
         {
-            if (Ubatt > 0x80 && Ubatt <= UbattMin)
+            if (Ubatt > 0x80 
+                && (Ubatt < UbattMin || (Ubatt == UbattMin && UbattLow <= UbattMinLow)))
             {
                 if (UbattTmr > UBT_TMRST)
                 {
@@ -1191,11 +1190,15 @@ void main(void) {
                                 // WDT elapses after 67 seconds
 
     __delay_ms(1000);
-    if (TEngUbattRW (UBATT_EEPROM, &UbattMin, 1))  // Read TEng treshold temp
+    if (TEngUbattRW (UBATT_EEPROM, &UbattMin, 1))  
     {   // Error - use standard Ubatt
         UbattMin = 0x93;    // 0x92 = ~11.28 V or lower.
                         // 0x92 is 0x49 previously, when we used (ADRESH << 6) | (ADRESL >> 2) to get voltage
                         // 0x80 (0x40 previously) = 10V, lowest voltage. If below, we won't try to start
+    }
+    if (TEngUbattRW (UBATT_EEPROM_LOW, &UbattMinLow, 1))  
+    {   // Error - use standard UbattLow
+        UbattMinLow = 0x80;  // UbattLow holds only 1 bit, Look in PunsCheck.c
     }
     if (TEngUbattRW (TENG_EEPROM, &TEngTemp, 1))  // Read TEng treshold temp
     {   // Error - use standard Temp

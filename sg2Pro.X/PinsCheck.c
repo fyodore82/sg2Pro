@@ -60,6 +60,7 @@ char StartCheck (char OnceMore)
         CheckedNow = CN_28;
         ADC_Start(AI28);
         Ubatt = 0;
+        UbattLow = 0;
         return SC_INPR;
     }
     if (ToCheck & (1 << CN_29))     // 29 (Teng) should be checked just after start command)
@@ -152,14 +153,22 @@ void CheckRes (void)
         PIR1bits.ADIF = 0;
         if (CheckedNow == CN_28 || CheckedNow == CN_29)     // Checking Teng or Ubatt
         {
-            unsigned char Ub, Te;
+            unsigned char Ub, UbLow, Te;
             if (CheckedNow == CN_28)
             {
                 Ub = (ADRESH << 7) | (ADRESL >> 1);
+                
                 if (Ubatt == 0)
                     Ubatt = Ub;
                 else
                     Ubatt = (Ub + Ubatt) / 2;
+                
+                UbLow = (ADRESL << 7);
+                
+                if (UbattLow == 0)
+                    UbattLow = UbLow;
+                else
+                    UbattLow = (UbLow + UbattLow) / 2;
             }
             if (CheckedNow == CN_29)
             {
