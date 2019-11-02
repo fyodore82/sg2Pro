@@ -37,6 +37,8 @@ extern "C" {
 #define ERR_CN21HIGHTOOLONG 0xC8
 #define ERR_CN25HIGHTOOLONG 0xC9
 
+unsigned char BinSt, EngSt;
+    
 #define ASRTOST     1   // ASR should be started (CN_25 is 1, wait when it will be 0 and start)
 #define ASROFFON    2   // ASR should be turned ON (gave negative impulse to ASR, but not acknoleged that Eng started)
 #define ENGASRON    3   // Engine started by ASR
@@ -99,12 +101,18 @@ unsigned char StateTest;
 // ASRChkTmr - Seems not used! After starting by ASR check if Engine works for at least ASRChkTmr. If less, go to ERR
 // EngChkTmr - Seems not used!, After starting engine check if it works for at least EngChkTmr. If less don't clear ERR and go to ERR
 // NewBinTmr, NewASRTmr - Timers, which are turned on after Binar or ASR switched to new states
+unsigned char NewBinTmr, NewASRTmr;
 // EngStartTmr - Time after Eng switched to OFF during Eng can be started and turned OFF withou ERR
+unsigned char EngStartTmr;
 // ASRONTmr - After this timer ASR will be started. Timer turned on after Binar stopped
+unsigned char ASRONTmr;
 // UbattTmr - Timer decremented if battery is low
+unsigned char UbattTmr;
 // TEB - Start Engine or Binar. If more or equal to 0x80 - Engine, if less or equal to 0x7F - Binar
 // TEBPrev - Previous value of TEB. If TEB != TEBPrev we identified that TEB gone to High from Low or vice versa. We need to log and make TEBPrev = TEB
-unsigned char BinSt, EngSt, NewBinTmr, NewASRTmr, ASRONTmr, EngStartTmr, UbattTmr, CN25Tmr, TEB, TEBPrev;
+unsigned char TEB, TEBPrev;
+// 
+unsigned char CN25Tmr;
 
 
 #ifdef	__cplusplus

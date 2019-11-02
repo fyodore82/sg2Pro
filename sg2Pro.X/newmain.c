@@ -290,7 +290,7 @@ unsigned char EngBinState (void)
         EngSt = OFF;    // Set EngSt to OFF to be able to start EngChkTmr
     }
     
-    if (!(PinState & (1 << CN_25)))    // START command received (CN_25 == 0
+    if (!(PinState & (1 << CN_25)))    // START command received (CN_25 == 0)
     {
         if (((BinSt == OFF && EngSt == OFF) 
             || ((BinSt&ERR_BINPATTERN) || (EngSt&ERR_ENGPATTERN))) 
@@ -490,7 +490,6 @@ unsigned char EngBinState (void)
             && ASRONTmr == 0xFF && NewBinTmr == 0xFF && NewASRTmr == 0xFF)
         {
             CN21CN25State = CN_2125NONE;
-            EngSt = OFF;
             IntSvcSync &= ~ISS_AUTOST;  // Start by command (NOT automatically, by low voltage)
 
             if (TEB <= 0x7F)  // TEB <= 0x7F - Binar
