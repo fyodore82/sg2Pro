@@ -7,8 +7,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-//#include <pic16f690.h> 
-//#include <htc.h>
 #include "../../i2c/i2c/i2c_my.h"
 #include "PinsCheck.h"
 #include "EngBinSt.h"
@@ -16,13 +14,11 @@
 #include "ResetReasons.h"
 #include <xc.h>
 #include "../../i2c/i2c/i2cCmds.h"
-//#include <.\i2c.h>
 
 // PIC16F690 Configuration Bit Settings
 
 // CONFIG
 //__CONFIG(FOSC_INTRCIO & WDTE_OFF & PWRTE_ON & MCLRE_ON & CP_OFF & CPD_OFF & BOREN_OFF & IESO_ON & FCMEN_OFF);
-
 
 #pragma config FOSC = INTRCIO   // Oscillator Selection bits (INTOSCIO oscillator: I/O function on RA4/OSC2/CLKOUT pin, I/O function on RA5/OSC1/CLKIN)
 #pragma config WDTE = OFF       // Watchdog Timer Enable bit (WDT disabled and can be enabled by SWDTEN bit of the WDTCON register)
@@ -38,18 +34,13 @@
 
 #define _XTAL_FREQ 4000000
 
-
-// Teng in 0x10 - 0x14
-// Ubatt in 0x15 - 0x19
-//const unsigned int abc1 @ 0x2110 = 0x5566;
-//const unsigned int abc2 @ 0x2112 = 0x5566;
-//const unsigned int abc3 @ 0x2114 = 0x5566;
-//const unsigned int abc4 @ 0x2116 = 0x5566;
-//const unsigned int abc5 @ 0x2118 = 0x5566;
-//__EEPROM_DATA(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
-//__EEPROM_DATA(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
-//__EEPROM_DATA(0xD6, 0xD6, 0xD6, 0xD6, 0xD6, 0x94, 0x94, 0x94);
-//__EEPROM_DATA(0x94, 0x94, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFF);
+// Teng - 77 from 07.12.19 (79 up to 2019)
+// Ubatt - 92 + 0 from 07.12.19
+// Ubatt = 0x93 - for old battery. Frequent eng start
+/*__EEPROM_DATA(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
+__EEPROM_DATA(0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF);
+__EEPROM_DATA(0x77, 0x77, 0x77, 0x77, 0x77, 0x92, 0x92, 0x92);
+__EEPROM_DATA(0x92, 0x92, 0x80, 0x80, 0x80, 0x80, 0x80, 0xFF);*/
 
 // UbattLow holds only 1 bit, Look in PunsCheck.c
 
@@ -689,12 +680,15 @@ void I2CSlaveSR (void)
                     case _I2C_UTRHLD:
                         SSPBUF = UbattMin;
                         break;
+                    case _I2C_UTRHLD_LOW:
+                        SSPBUF = UbattMinLow;
+                        break;
                     case _I2C_TTRHLD:
                         SSPBUF = TEngTemp;
                         break;
                     case _I2C_CMDREBOOT:
                     default:
-                        SSPBUF = 0x0;    // Command unrecognized - send 0x0
+                        SSPBUF = 0x55;    // Command unrecognized - send 0x55
                         break;
                 }
                 SSPCONbits.CKP = 1;
@@ -736,13 +730,14 @@ void I2CSlaveSR (void)
                         break;
                     case _I2C_UBATT:
                         Ubatt = SSPBUF;
-                        TEngUbattRW (UBATT_EEPROM, &Ubatt, 0);
+                        //TEngUbattRW (UBATT_EEPROM, &Ubatt, 0);
                         break;
                     case _I2C_TENG:
                         Teng = SSPBUF;
-                        TEngUbattRW (TENG_EEPROM, &Teng, 0);
+                        //TEngUbattRW (TENG_EEPROM, &Teng, 0);
                         break;
                     case _I2C_PINSTATE:
+                        break;
                     case _I2C_BINST:
                         BinSt = SSPBUF;
                         break;
@@ -798,8 +793,9 @@ void I2CSlaveSR (void)
                         TEngUbattRW (UBATT_EEPROM, &x, 0);  // Read TEng treshold temp
                         break;
                     case _I2C_UTRHLD_LOW:
-                        UbattMinLow = SSPBUF;
-                        TEngUbattRW (UBATT_EEPROM_LOW, &UbattMinLow, 0);
+                        x = SSPBUF;
+                        UbattMinLow = x;
+                        TEngUbattRW (UBATT_EEPROM_LOW, &x, 0);
                         break;
                     case _I2C_TTRHLD:
                         x = SSPBUF;
