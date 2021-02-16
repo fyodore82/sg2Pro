@@ -1,0 +1,7 @@
+build/
+debug/
+dist/
+.vscode/
+
+*.obj
+*.i

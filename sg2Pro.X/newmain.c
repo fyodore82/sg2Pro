@@ -19,6 +19,7 @@
 
 // CONFIG
 //__CONFIG(FOSC_INTRCIO & WDTE_OFF & PWRTE_ON & MCLRE_ON & CP_OFF & CPD_OFF & BOREN_OFF & IESO_ON & FCMEN_OFF);
+#ifndef _UNIT_TEST_
 
 #pragma config FOSC = INTRCIO   // Oscillator Selection bits (INTOSCIO oscillator: I/O function on RA4/OSC2/CLKOUT pin, I/O function on RA5/OSC1/CLKIN)
 #pragma config WDTE = OFF       // Watchdog Timer Enable bit (WDT disabled and can be enabled by SWDTEN bit of the WDTCON register)
@@ -44,6 +45,8 @@ __EEPROM_DATA(0x92, 0x92, 0x80, 0x80, 0x80, 0x80, 0x80, 0xFF);*/
 
 // UbattLow holds only 1 bit, Look in PunsCheck.c
 
+#endif
+
 unsigned char addrh, addrl;
 
 unsigned char day, sec, min, hour;
@@ -59,6 +62,7 @@ void I2CSlaveSR (void);
 
 // stack = 0
 
+#ifndef _UNIT_TEST_
 void interrupt tc_int (void)
 {
     if (INTCONbits.RABIF)
@@ -269,6 +273,7 @@ void SearchStop (void)  // Search for stop byte
             }
         }
 }
+#endif
 
 // stack = 4 (WriteLog)
 unsigned char EngBinState (void)
@@ -350,8 +355,7 @@ unsigned char EngBinState (void)
                     NewASRTmr = 0x03;
                                         // Start EngChkTmr timer to check if Engine will work for at least EngChkTmr
                                         //  and only if Engine has been switched OFF more than EngStartTmr ago
-                    EngSt = ENGON;      // WriteLog will write correct EngSt
- //                   WriteLog(0, 0);    // stack = 3
+                    // EngSt = ENGON;   // WriteLog will write correct EngSt
                     WrLogEvent = 0;
                 }
                 EngSt = ENGON;
@@ -364,9 +368,8 @@ unsigned char EngBinState (void)
                 if (EngSt == ASROFFON)   // We just started ASR, check if Engine will work for at lease NewASRTmr
                 {
                     NewASRTmr = 0x05;
-                    EngSt = ENGASRON;
+                    // EngSt = ENGASRON;
                     WrLogEvent = 0;
-                    //WriteLog(0, 0);
                 }
                 EngSt = ENGASRON;
             }
@@ -566,6 +569,8 @@ unsigned char EngBinState (void)
     }
     return (WrLogEvent);
 }
+
+#ifndef _UNIT_TEST_
 // stack = 0
 void I2CReset (void)
 {
@@ -1344,4 +1349,4 @@ void main(void) {
          }
     }
 }
-
+#endif
