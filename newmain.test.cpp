@@ -89,7 +89,7 @@ TEST_F(EngBinStateTest, Button_2_Second_Push_Engine_To_Start)
   PinState = (1 << CN_21) | (0 << CN_25);
   CN21CN25State = CN_25FIRSTLOW;
   TEB = 0x80; // Engine start
-  
+
   EngBinState();
   EXPECT_EQ(CN21CN25State, CN_2125NONE);
   EXPECT_EQ(EngSt, ASRTOST);
@@ -101,7 +101,7 @@ TEST_F(EngBinStateTest, Button_2_Second_Push_Bin_To_Start)
   PinState = (1 << CN_21) | (0 << CN_25);
   CN21CN25State = CN_25FIRSTLOW;
   TEB = 0x70; // Binar start
-  
+
   EngBinState();
   EXPECT_EQ(CN21CN25State, CN_2125NONE);
   EXPECT_EQ(BinSt, BINTOST);
